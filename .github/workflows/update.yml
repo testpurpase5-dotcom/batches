@@ -1,1 +1,33 @@
+name: Update Batches Daily
 
+on:
+  schedule:
+    - cron: '30 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download JSON
+        run: |
+          curl -L "https://api.penxpencil.com/v3/return/pw-old-and-new-batches.php" -o batches.json
+
+      - name: Commit if changed
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+
+          git add batches.json
+
+          if ! git diff --staged --quiet; then
+            git commit -m "Daily JSON Update"
+            git push
+          fi
